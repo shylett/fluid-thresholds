@@ -32,7 +32,7 @@ clarity, purpose, and a deep respect for interconnectedness.
 
 ### 🌐 Live Page  
 [View the live Fluid Thresholds profile →](https://shylett.github.io/fluid-thresholds/)  
-*(Update this link after GitHub Pages is published)*
+
 
 ---
 
