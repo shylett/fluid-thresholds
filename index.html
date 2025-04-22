@@ -1,0 +1,336 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fluid Thresholds | Shylett Sonam Anthony</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --background-color: #FFFFFF;
+      --text-color: #333333;
+      --container-bg: rgba(0, 0, 0, 0.05);
+      --watermark-bg: rgba(0, 0, 0, 0.05);
+      --glow-color: rgba(26, 163, 163, 0.3);
+      --glow-color-hover: rgba(26, 163, 163, 0.5);
+      --text-glow: rgba(26, 163, 163, 0.3);
+      --text-glow-subtle: rgba(26, 163, 163, 0.2);
+    }
+
+    body.dark-theme {
+      --background-color: #000000;
+      --text-color: #FFFFFF;
+      --container-bg: rgba(255, 255, 255, 0.1);
+      --watermark-bg: rgba(255, 255, 255, 0.1);
+      --glow-color: rgba(26, 163, 163, 0.25);
+      --glow-color-hover: rgba(26, 163, 163, 0.4);
+      --text-glow: rgba(26, 163, 163, 0.25);
+      --text-glow-subtle: rgba(26, 163, 163, 0.15);
+    }
+
+    body {
+      font-family: 'Playfair Display', serif;
+      background-color: var(--background-color);
+      color: var(--text-color);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      margin: 0;
+      padding: 1rem;
+      position: relative;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    .tab {
+      perspective: 1000px;
+      transition: color 0.3s ease, background 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 6px 20px rgba(0, 0, 0, 0.1);
+      text-shadow: 0 0 5px var(--text-glow), 1px 1px 2px rgba(0, 0, 0, 0.3);
+      transform: translateZ(0);
+    }
+    .tab:hover {
+      color: #FFD700;
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.2);
+      transform: translateZ(10px) rotateX(10deg) rotateY(10deg);
+    }
+    .tab.active {
+      background: rgba(255, 215, 0, 0.2);
+      color: #FFD700;
+      border-bottom: 2px solid #FFD700;
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.2);
+      transform: translateZ(5px);
+    }
+    img {
+      perspective: 1000px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 6px 20px rgba(0, 0, 0, 0.1);
+      transform: translateZ(0);
+    }
+    img:hover {
+      transform: scale(1.05) translateZ(15px) rotateX(5deg) rotateY(5deg);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.2);
+    }
+    .content-container {
+      perspective: 1000px;
+      max-width: 40rem;
+      background: var(--container-bg);
+      backdrop-filter: blur(8px);
+      border-radius: 12px;
+      padding: 1.5rem;
+      border: 1px solid #1AA3A3;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 6px 20px rgba(0, 0, 0, 0.1);
+      transform: translateZ(0);
+      transition: background 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+    }
+    .content-container:hover {
+      transform: translateZ(20px) rotateX(2deg) rotateY(2deg);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3), 0 12px 40px rgba(0, 0, 0, 0.2);
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    h1, h2 {
+      text-shadow: 0 0 5px var(--text-glow), 1px 1px 2px rgba(0, 0, 0, 0.3), 2px 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    p, span {
+      text-shadow: 0 0 3px var(--text-glow-subtle), 1px 1px 2px rgba(0, 0, 0, 0.2);
+    }
+    a, button, input, textarea {
+      perspective: 1000px;
+      transition: background 0.3s ease, color 0.3s ease, border 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+    }
+    a:hover, button:hover, input:hover, textarea:hover {
+      border-color: #FFD700;
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.2);
+      transform: translateZ(10px);
+    }
+    a:hover, button:hover {
+      background: #1AA3A3;
+      color: #FFD700;
+    }
+    a {
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 6px 20px rgba(0, 0, 0, 0.1);
+      transform: translateZ(0);
+    }
+    a:active {
+      transform: translateZ(0) translateY(2px);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2), 0 3px 10px rgba(0, 0, 0, 0.1);
+    }
+    input, textarea {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid #1AA3A3;
+      color: var(--text-color);
+      border-radius: 6px;
+      padding: 0.5rem;
+      width: 100%;
+      box-sizing: border-box;
+      transition: color 0.3s ease;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+    .watermark {
+      perspective: 1000px;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      opacity: 0.7;
+      width: 60px;
+      height: 60px;
+      background: var(--watermark-bg);
+      border-radius: 50%;
+      border: 1px solid #FFD700;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 6px 20px rgba(0, 0, 0, 0.1);
+      transform: translateZ(0);
+      transition: background 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease;
+      cursor: pointer;
+    }
+    .watermark:hover {
+      opacity: 1;
+      transform: translateZ(10px) rotateX(5deg) rotateY(5deg);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.2);
+    }
+    .watermark-symbol {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 40px;
+      height: 40px;
+      animation: rotate 20s linear infinite;
+    }
+    @keyframes rotate {
+      from {
+        transform: translate(-50%, -50%) rotate(0deg);
+      }
+      to {
+        transform: translate(-50%, -50%) rotate(360deg);
+      }
+    }
+    .credits {
+      max-width: 40rem;
+      margin-top: 1rem;
+      text-align: center;
+      font-size: 0.875rem;
+      opacity: 0.7;
+      color: var(--text-color);
+      text-shadow: 0 0 3px var(--text-glow-subtle), 1px 1px 2px rgba(0, 0, 0, 0.2);
+      transition: color 0.3s ease;
+    }
+    .credits a {
+      color: #FFD700;
+      transition: color 0.3s ease;
+    }
+    .credits a:hover {
+      color: #1AA3A3;
+    }
+  </style>
+</head>
+<body class="light-theme">
+
+  <!-- Header -->
+  <div class="text-center mb-6">
+    <h1 class="text-4xl md:text-5xl font-semibold mb-3 tracking-tight">Fluid Thresholds</h1>
+    <p class="text-lg md:text-xl italic opacity-80">A Journey of Science, Art, and Becoming</p>
+  </div>
+
+  <!-- Tabs -->
+  <div class="flex justify-center space-x-6 mb-4">
+    <button class="tab active px-4 py-2 rounded-md text-base tracking-wide" onclick="showTab('about')">About</button>
+    <button class="tab px-4 py-2 rounded-md text-base tracking-wide" onclick="showTab('artwork')">Artwork</button>
+    <button class="tab px-4 py-2 rounded-md text-base tracking-wide" onclick="showTab('projects')">Projects</button>
+    <button class="tab px-4 py-2 rounded-md text-base tracking-wide" onclick="showTab('contact')">Contact</button>
+  </div>
+
+  <!-- Tab Content -->
+  <div class="content-container w-full">
+    <div id="about" class="tab-content active text-center">
+      <h2 class="text-2xl md:text-3xl font-semibold mb-4 tracking-tight">About the Artist</h2>
+      <p class="mb-3 text-base opacity-90 leading-relaxed">Shylett Sonam Anthony (she/her) is a globally-engaged scientist and scholar whose work bridges biotechnology, health systems, and sustainable innovation. Her philosophy—<span class="font-semibold">Fluid, Thoughtful, Globally Aware, Always Becoming</span>—guides her journey through complexity with care.</p>
+    </div>
+
+    <div id="artwork" class="tab-content text-center">
+      <h2 class="text-2xl md:text-3xl font-semibold mb-4 tracking-tight">The Artwork</h2>
+      <img src="Fluid_Thresholds.jpg" alt="Fluid Thresholds full painting" class="w-full max-w-sm mb-4 rounded-md shadow-md border border-[#FFD700] mx-auto">
+      <p class="text-base opacity-90 leading-relaxed">This abstract work captures a journey of emergence—from rooted beginnings in the Pacific to the flowing intersections of health, research, and global belonging. Golden arcs, shifting light, and layered blues symbolize transformation across time and space.</p>
+    </div>
+
+    <div id="projects" class="tab-content text-center">
+      <h2 class="text-2xl md:text-3xl font-semibold mb-4 tracking-tight">Other Projects</h2>
+      <p class="mb-4 text-base opacity-90 leading-relaxed">Explore more of Shylett Sonam Anthony's creative and scientific endeavors.</p>
+      <a class="bg-transparent border border-[#FFD700] text-[var(--text-color)] px-5 py-2 rounded-md transition tracking-wide inline-block">Coming Soon</a>
+    </div>
+
+    <div id="contact" class="tab-content text-center">
+      <h2 class="text-2xl md:text-3xl font-semibold mb-4 tracking-tight">Connect & Collaborate</h2>
+      <p class="mb-4 text-base opacity-90 leading-relaxed">Interested in collaboration, storytelling, or creative science communication?</p>
+      <a href="mailto:shylettsonamanthony@outlook.com" class="bg-transparent border border-[#FFD700] text-[var(--text-color)] px-5 py-2 rounded-md transition tracking-wide inline-block">Reach Out</a>
+    </div>
+  </div>
+
+  <!-- Credits Section -->
+  <div class="credits">
+    <p>Created and Designed by Shylett Sonam Anthony | Powered by <a href="https://tailwindcss.com" target="_blank">Tailwind CSS</a></p>
+  </div>
+
+  <!-- Watermark (Theme Toggle) -->
+  <div class="watermark" onclick="toggleTheme()">
+    <svg class="watermark-symbol" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <path d="M20 70 Q50 30 80 70" fill="none" stroke="url(#goldGradient)" stroke-width="6" stroke-linecap="round"/>
+      <circle cx="80" cy="70" r="4" fill="url(#goldGradient)"/>
+      <defs>
+        <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#FFD700;stop-opacity:1"/>
+          <stop offset="100%" style="stop-color:#DAA520;stop-opacity:1"/>
+        </linearGradient>
+      </defs>
+    </svg>
+  </div>
+
+  <script>
+    // Theme toggle functionality
+    function toggleTheme() {
+      const body = document.body;
+      if (body.classList.contains('light-theme')) {
+        body.classList.remove('light-theme');
+        body.classList.add('dark-theme');
+        localStorage.setItem('theme', 'dark');
+      } else {
+        body.classList.remove('dark-theme');
+        body.classList.add('light-theme');
+        localStorage.setItem('theme', 'light');
+      }
+    }
+
+    // Load theme from localStorage on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      const savedTheme = localStorage.getItem('theme');
+      const body = document.body;
+      if (savedTheme === 'dark') {
+        body.classList.remove('light-theme');
+        body.classList.add('dark-theme');
+      } else {
+        body.classList.add('light-theme');
+      }
+    });
+
+    // Tab functionality
+    function showTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+      });
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      document.getElementById(tabId).classList.add('active');
+      document.querySelector(`button[onclick="showTab('${tabId}')"]`).classList.add('active');
+    }
+  </script>
+
+</body>
+</html>
